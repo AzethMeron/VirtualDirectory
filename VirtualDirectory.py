@@ -49,7 +49,7 @@ def opencv_to_pil(opencv_image):
     return pil_image
 
 class VirtualDirectory:
-    def __init__(self, root, min_subdir_num = 100, serializer = None, compressor = None, data_manager = None, load_to_memory = False, verbose = True, seed = None):
+    def __init__(self, root, data_manager, verbose = True, min_subdir_num = 100, load_to_memory = False, serializer = None, compressor = None, seed = None):
         os.makedirs( root, exist_ok = True )
         self.root = root # String
         self.load_to_memory = load_to_memory
@@ -57,8 +57,8 @@ class VirtualDirectory:
         self.random = random.Random(seed) if seed else random.Random()
         self.serializer = serializer if serializer else PickleSerializer()
         self.compressor = compressor if compressor else ZlibCompressor()
-        self.data_manager = data_manager if data_manager else PillowDataManager()
-        if self.verbose: print("Welcome to VirtualDirectory! Scanning for subdirectories...")
+        self.data_manager = data_manager
+        if self.verbose: print(f"VirtualDirectory {self.root}: Scanning for subdirectories...")
         self.subdir_list = [ subdir for subdir in os.listdir(root) if os.path.isdir( os.path.join(root, subdir) ) ] # [ subdir_0, subdir_1 ... subdir_X ]
         if len(self.subdir_list) < min_subdir_num: self.__generate_subdirs(min_subdir_num)
         if self.verbose: print(f"Found {len(self.subdir_list)} directories.")
