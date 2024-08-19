@@ -12,6 +12,17 @@ import cv2 # pip install opencv-python>=4.10.0.84
 from PIL import Image as PilImage # pip install pillow>=10.4.0
 import numpy # pip install numpy>=2.1.0
 
+def pil_to_opencv(pil_image):
+    data = pil_image.convert("RGB")
+    data = numpy.array(data)
+    opencv_image = cv2.cvtColor(data, cv2.COLOR_RGB2BGR)
+    return opencv_image
+
+def opencv_to_pil(opencv_image):
+    data = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
+    pil_image = PilImage.fromarray(data)
+    return pil_image
+
 class PickleSerializer:
     def serialize(self, python_object):
         return pickle.dumps(python_object)
@@ -37,16 +48,22 @@ class PillowDataManager:
         buffer = io.BytesIO(binary_string)
         return PilImage.open(buffer)
 
-def pil_to_opencv(pil_image):
-    data = pil_image.convert("RGB")
-    data = numpy.array(data)
-    opencv_image = cv2.cvtColor(data, cv2.COLOR_RGB2BGR)
-    return opencv_image
-
-def opencv_to_pil(opencv_image):
-    data = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
-    pil_image = PilImage.fromarray(data)
-    return pil_image
+class OpenCVDataManager:
+    def save(self, path, opencv_image):
+        pil_image = opencv_to_pil(opencv_image)
+        pil_image.save(path)
+    def load(self, path):
+        pil_image = PilImage.open(path)
+        return pil_to_opencv(pil_image)
+    def serialize(self, opencv_image):
+        buffer = io.BytesIO()
+        pil_image = opencv_to_pil(opencv_image)
+        pil_image.save(buffer, format = 'PNG')
+        return buffer.getvalue()
+    def deserialize(self, binary_string):
+        buffer = io.BytesIO(binary_string)
+        pil_image = PilImage.open(buffer)
+        return pil_to_opencv(pil_image)
 
 class VirtualDirectory:
     def __init__(self, root, data_manager, verbose = True, min_subdir_num = 100, load_to_memory = False, serializer = None, compressor = None, seed = None):
