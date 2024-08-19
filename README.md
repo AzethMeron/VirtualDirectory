@@ -24,6 +24,8 @@ root/
 │   └── file_2
 │   └── file_3
 ├── dataset.csv (ignored)
+├── subdir_0.vdd
+└── subdir_X.vdd
 ```
 
 To create instance of ```VirtualDirectory``` you can use following recipe.
@@ -78,8 +80,9 @@ Once ```VirtualDirectory``` is properly set up, it will work absolutely seamless
 ```py
 vd = VirtualDirectory(...)
 vd.save(filename, object) # saves object under given filename in randomly chosen subdirectory
-vd.load(filename) # loads object from given filename
-vd.exists(filename) # checks if object with given filename exists within dataset
+vd.load(filename) # loads object from given filename. Returns None if there's no such file
+vd.exists(filename) # checks if object with given filename exists within dataset (True/False)
+vd.remove(filename) # removes file from dataset. If there's no such file, it's silently ignored
 vd.save_state() # Saves all data in RAM to .vdd files. By default it happens when instance is destroyed, you can sometimes call it manually to make sure no progress is lost
 len(vd) # number of files in dataset
 ```
