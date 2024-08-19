@@ -131,3 +131,48 @@ class ZlibCompressor:
         return zlib.decompress(binary_string)
 ```
 
+---
+
+# Miscellaneous
+
+I've included tools that convert between Pillow and OpenCV image format. Given the primary objective of this library is to be used in AI, it might be useful to some. 
+```py
+from VirtualDirectory import pil_to_opencv, opencv_to_pil
+```
+
+```py
+def pil_to_opencv(pil_image):
+    data = pil_image.convert("RGB")
+    data = numpy.array(data)
+    opencv_image = cv2.cvtColor(data, cv2.COLOR_RGB2BGR)
+    return opencv_image
+```
+
+```py
+def opencv_to_pil(opencv_image):
+    data = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
+    pil_image = PilImage.fromarray(data)
+    return pil_image
+```
+
+It's possible to implement opencv's ```data_manager``` by building upon ```PillowDataManager```, however this would mean that any time image is accessed it must be converted from Pillow format *(RGB)* into OpenCV *(BGR)*, which can cause noticeable overhead, for large datasets dedicated implementation would be much better.
+
+
+```py
+class OpenCVDataManager:
+    def save(self, path, opencv_image):
+        pil_image = opencv_to_pil(opencv_image)
+        pil_image.save(path)
+    def load(self, path):
+        pil_image = PilImage.open(path)
+        return pil_to_opencv(pil_image)
+    def serialize(self, opencv_image):
+        buffer = io.BytesIO()
+        pil_image = opencv_to_pil(opencv_image)
+        pil_image.save(buffer, format = 'PNG')
+        return buffer.getvalue()
+    def deserialize(self, binary_string):
+        buffer = io.BytesIO(binary_string)
+        pil_image = PilImage.open(buffer)
+        return pil_to_opencv(pil_image)
+```
