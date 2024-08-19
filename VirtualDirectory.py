@@ -119,6 +119,13 @@ class VirtualDirectory:
         self.files_map[filename] = subdir
         self.data_manager.save(path, data)
         if self.load_to_memory: self.memory[subdir][filename] = self.data_manager.serialize(data)
+    def remove(self, filename):
+        if self.exists(filename):
+            subdir = self.files_map[filename]
+            path = os.path.join(self.root, subdir, filename)
+            os.remove(path)
+            del self.files_map[filename]
+            if self.load_to_memory: del self.memory[subdir][filename]
     def exists(self, filename):
         return filename in self.files_map
     def save_state(self):
@@ -132,6 +139,7 @@ class VirtualDirectory:
     def __load_state(self, subdir_list):
         if not self.load_to_memory: return
         memory = dict()
+        for subdir in subdir_list: memory[subdir] = dict()
         dump_list = [ i for i in os.listdir(self.root) if i.endswith(".vdd") ]
         subdir_set = set(subdir_list)
         if self.verbose and len(dump_list) > 0: print(f"Found {len(dump_list)} dumpfiles, loading...")
