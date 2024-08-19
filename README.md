@@ -88,4 +88,9 @@ for filename, path, object in vd:
   # path - string, entire path; root/subdir/filename
   # object - instance of data stored in given file (Only if dataset is fully loaded into RAM, otherwise None)
 ```
-**If you ever add/remove data to dataset without using 
+**If you ever add/remove data without using proper interface tools, you have to create a new instance of ```VirtualDirectory```**. Fortunatelly, it does NOT require ```.vdd``` to be regenerated - class will update them on its own.
+
+---
+
+# Advanced usage
+
