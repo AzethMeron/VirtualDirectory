@@ -81,7 +81,7 @@ vd.exists(filename) # checks if object with given filename exists within dataset
 vd.save_state() # Saves all data in RAM to .vdd files. By default it happens when instance is destroyed, you can sometimes call it manually to make sure no progress is lost
 len(vd) # number of files in dataset
 ```
-You can also iterrate over files in it, but then consider the data read-only:
+You can also iterrate over files within it, but then consider the data read-only:
 ```py
 for filename, path, object in vd:
   # filename - string, just filename
@@ -93,4 +93,36 @@ for filename, path, object in vd:
 ---
 
 # Advanced usage
+
+One day, hopefully...
+
+```py
+from VirtualDirectory import VirtualDirectory, PillowDataManager
+vd = VirtualDirectory(
+  root = "dataset", # main directory of the dataset (string)
+  data_manager = PillowDataManager(), # instance of a class that is used to save, load and serialize datatype used in dataset
+  verbose = True, # whether object should print progress as dataset is loading (True) or not (False). Defaults to True
+  load_to_memory = True, # whether entire dataset should be loaded into RAM (True) or not (False). Defaults to False
+  min_subdir_num=100, # minimal amount of subdirectories used to store data. Defaults to 100
+  serializer = PickleSerializer(), # Serializer used for .vdd files. Python dictionary is serialized, then compressed and saved onto drive
+  compressor = ZlibCompressor(), # Compressor used for .vdd files. Python dictionary is serialized, then compressed and saved onto drive
+  seed = None # Seed for random number generated contained within VirtualDirectory. I've no idea why anyone would want to set it to any specific value
+)
+```
+
+```py
+class PickleSerializer:
+    def serialize(self, python_object):
+        return pickle.dumps(python_object)
+    def deserialize(self, binary_string):
+        return pickle.loads(binary_string)
+```
+
+```py
+class ZlibCompressor:
+    def compress(self, binary_string):
+        return zlib.compress(binary_string)
+    def decompress(self, binary_string):
+        return zlib.decompress(binary_string)
+```
 
