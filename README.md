@@ -108,10 +108,10 @@ One day, hopefully...
 ```py
 from VirtualDirectory import VirtualDirectory, PillowDataManager
 vd = VirtualDirectory(
-  root = "dataset", # main directory of the dataset (string)
-  data_manager = PillowDataManager(), # instance of a class that is used to save, load and serialize datatype used in dataset
+  root, # main directory of the dataset (string)
+  data_manager, # instance of a class that is used to save, load and serialize datatype used in dataset
   verbose = True, # whether object should print progress as dataset is loading (True) or not (False). Defaults to True
-  load_to_memory = True, # whether entire dataset should be loaded into RAM (True) or not (False). Defaults to False
+  load_to_memory = False, # whether entire dataset should be loaded into RAM (True) or not (False). Defaults to False
   min_subdir_num=100, # minimal amount of subdirectories used to store data. Defaults to 100
   save_on_destruction = False, # Whether state of memory should be saved automatically when object of VirtualDirectory is removed - it's known to bug out and raise exceptions
   serializer = PickleSerializer(), # Serializer used for .vdd files. Python dictionary is serialized, then compressed and saved onto drive
