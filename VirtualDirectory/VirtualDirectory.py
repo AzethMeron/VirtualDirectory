@@ -67,7 +67,7 @@ class OpenCVDataManager:
         return pil_to_opencv(pil_image)
 
 class VirtualDirectory:
-    def __init__(self, root, data_manager, verbose = True, min_subdir_num = 100, load_to_memory = False, save_on_destruction = False, serializer = None, compressor = None, seed = None):
+    def __init__(self, root, data_manager, verbose = True, min_subdir_num = 100, load_to_memory = True, save_on_destruction = False, serializer = None, compressor = None, seed = None):
         self.__memory_extension = ".vdd"  # Must include full-stop (".")
         self.__secret_location = ".secret"  # Must start with full-stop (".")
         self.__min_subdir_num = min_subdir_num
