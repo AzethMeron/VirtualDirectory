@@ -87,6 +87,7 @@ vd.load(filename) # loads object from given filename. Returns None if there's no
 vd.exists(filename) # checks if object with given filename exists within dataset (True/False)
 vd.remove(filename) # removes file from dataset. If there's no such file, it's silently ignored
 vd.save_state() # Saves all data in RAM to .vdd files. Speeds up loading in the future
+vd.redistribute_all_files(are_you_sure=True) # When called with are_you_sure=True, it moves all files from all subdirectories into root/.secret, then removes subdirectories and essentially recreates file structure. Allows to easily split dataset into subdirectories (batches) of similar size
 len(vd) # number of files in dataset
 ```
 You can also iterrate over files within it, but then consider the data read-only:
