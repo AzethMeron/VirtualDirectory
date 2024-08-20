@@ -195,7 +195,7 @@ class VirtualDirectory:
         if self.verbose: print(f"VirtualDirectory {self.root}: Saving memory. This may take a while...")
         self.__save_state(destructed=False)
     def redistribute_all_files(self, are_you_sure=False):
-        if not are_you_sure and self.verbose: print("You're not sure you want to redistribute all files? Then aborting.")
+        if not are_you_sure and self.verbose: print(f"VirtualDirectory {self.root}: You're not sure you want to redistribute all files? Then aborting.")
         if not are_you_sure: return
         if self.verbose: print(f"VirtualDirectory {self.root}: Redistributing files. This may take a while...")
         secret_path = os.path.join( self.root, self.__secret_location )
