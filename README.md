@@ -92,10 +92,12 @@ len(vd) # number of files in dataset
 ```
 You can also iterrate over files within it, but then consider the data read-only:
 ```py
-for filename, path, object in vd:
+for filename, path, serialized_object in vd:
   # filename - string, just filename
   # path - string, entire path; root/subdir/filename
-  # object - instance of data stored in given file (Only if dataset is fully loaded into RAM, otherwise None)
+  # serialized_object - instance of data stored in given file (Only if dataset is fully loaded into RAM, otherwise None). Before usage, it must be deserialized with data_manager
+  #data = vd.data_manager.deserialize(serialized_object) # like this
+  #data = vd.load(filename) # or you can just request data from vd
 ```
 **If you ever add/remove data without using proper interface tools, you have to create a new instance of ```VirtualDirectory```**. Fortunatelly, it does NOT require ```.vdd``` to be regenerated - class will update them on its own.
 
