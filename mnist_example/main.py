@@ -3,6 +3,7 @@ from VirtualDirectory import VirtualDirectory, PillowDataManager
 import os
 
 # This script loads all images from one directory and puts it into VirtualDirectory, building the hierarchy with subdirectories on its own.
+# The same can be achieved by moving entire mnist_single_dir into mnist_vd, then by calling vd.redistribute_all_files(are_you_sure=True)
 
 mnist = os.listdir("mnist_single_dir")
 data_manager = PillowDataManager()
