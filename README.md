@@ -148,6 +148,8 @@ from VirtualDirectory import VirtualDirectory, pil_to_opencv, opencv_to_pil, Pil
 ```
 
 ```py
+import numpy
+import cv2
 def pil_to_opencv(pil_image):
     data = pil_image.convert("RGB")
     data = numpy.array(data)
@@ -156,6 +158,8 @@ def pil_to_opencv(pil_image):
 ```
 
 ```py
+import cv2
+from PIL import Image as PilImage
 def opencv_to_pil(opencv_image):
     data = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
     pil_image = PilImage.fromarray(data)
@@ -166,6 +170,8 @@ It's possible to implement opencv's ```data_manager``` by building upon ```Pillo
 
 
 ```py
+import io
+from PIL import Image as PilImage
 class OpenCVDataManager:
     def save(self, path, opencv_image):
         pil_image = opencv_to_pil(opencv_image)
