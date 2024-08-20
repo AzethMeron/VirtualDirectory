@@ -12,4 +12,4 @@ for filename in mnist:
 	path = os.path.join("mnist_single_dir", filename)
 	image = data_manager.load(path)
 	vd.save(filename, image)
-
+vd.save_state()

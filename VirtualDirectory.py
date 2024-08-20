@@ -145,9 +145,11 @@ class VirtualDirectory:
             if self.load_to_memory: del self.memory[subdir][filename]
     def exists(self, filename):
         return filename in self.files_map
-    def save_state(self):
+    def save_state(self, _destructed = False):
         if not self.load_to_memory: return
-        for subdir in self.memory.keys():
+        if self.verbose: print(f"VirtualDirectory {self.root}: Saving memory. This may take a while...")
+        loop = self.memory.keys() if _destructed else tqdm.tqdm(self.memory.keys(), disable = not self.verbose, postfix={"stage":"saving vdd files"})
+        for subdir in loop:
             path = os.path.join( self.root, f"{subdir}.vdd")
             dump = self.serializer.serialize( self.memory[subdir] )
             dump = self.compressor.compress(dump)
@@ -173,7 +175,7 @@ class VirtualDirectory:
     def __len__(self):
         return len(self.files_map)
     def __del__(self):
-        self.save_state()
+        self.save_state(_destructed=True)
     def __iter__(self):
         for filename in self.files_map.keys():
             subdir = self.files_map[filename]
