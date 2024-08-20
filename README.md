@@ -13,7 +13,7 @@ pip install git+https://github.com/AzethMeron/VirtualDirectory.git
 
 **Check ```mnist_example/``` to see the setup in practice. It's simpler than it appears when described.**
 
-```VirtualDirectory``` introduces simple and useful hierarchy to the dataset. Within main directory *(called ```root```)* there's a number of subdirectories of arbitrary names *(names does NOT matter)*. All regular files within ```root``` are ignored, so you can store your ```csv``` or ```json``` there. Everything inside each of of subdirectories is considered ```object``` *(a file)*. Simple file structure can be seen below. **NOTE: name of any file within subdirectories must be unique for entire dataset**, overlapping filenames will result in overwriting.
+```VirtualDirectory``` introduces simple and useful hierarchy to the dataset. Within main directory *(called ```root```)* there's a number of subdirectories of arbitrary names *(names does NOT matter)*. All regular files within ```root``` are ignored, so you can store your ```csv``` or ```json``` there. Everything inside each of of subdirectories is considered ```object``` *(a file)*. Simple file structure can be seen below. **NOTE: name of any file must be unique for entire dataset**, even if those are stored in different subdirectory. Overlapping filenames will result in overwriting.
 
 ```
 root/
