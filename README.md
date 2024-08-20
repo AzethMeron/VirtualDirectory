@@ -29,7 +29,7 @@ root/
 └── .anything (ignored)
 ```
 
-All files and directories with leading ```.``` are invisible to ```VirtualDirectory```. 
+**All files and directories with leading ```.``` are invisible to ```VirtualDirectory```.**
 
 To create instance of ```VirtualDirectory``` you can use following recipe.
 
