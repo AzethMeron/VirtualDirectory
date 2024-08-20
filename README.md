@@ -25,8 +25,11 @@ root/
 │   └── file_3
 ├── dataset.csv (ignored)
 ├── subdir_0.vdd
-└── subdir_X.vdd
+├── subdir_X.vdd
+└── .anything (ignored)
 ```
+
+All files and directories with leading ```.``` are invisible to ```VirtualDirectory```. 
 
 To create instance of ```VirtualDirectory``` you can use following recipe.
 
@@ -52,7 +55,7 @@ class DataManager:
   def serialize(self, object): # serializes object into a binary string. Should include compression
   def deserialize(self, binary_string): # reads object back from binary string
 ```
-Example that works with pillow images can be seen below. Serialization is used when dataset loads all of the data into memory: by using ```PNG``` compression we can get much smaller size than by pickling the image and compressing it with ```zlib```.
+Example that works with pillow images can be seen below. Serialization is used when dataset loads all of the data into memory: using ```PNG``` format we can achieve best lossless compression for images, significantly better than by pickling Pillow image and compressing it with ```zlib```. 
 
 ```py
 import io
@@ -83,7 +86,7 @@ vd.save(filename, object) # saves object under given filename in randomly chosen
 vd.load(filename) # loads object from given filename. Returns None if there's no such file
 vd.exists(filename) # checks if object with given filename exists within dataset (True/False)
 vd.remove(filename) # removes file from dataset. If there's no such file, it's silently ignored
-vd.save_state() # Saves all data in RAM to .vdd files. By default it happens when instance is destroyed, you can sometimes call it manually to make sure no progress is lost
+vd.save_state() # Saves all data in RAM to .vdd files. Speeds up loading in the future
 len(vd) # number of files in dataset
 ```
 You can also iterrate over files within it, but then consider the data read-only:
@@ -109,6 +112,7 @@ vd = VirtualDirectory(
   verbose = True, # whether object should print progress as dataset is loading (True) or not (False). Defaults to True
   load_to_memory = True, # whether entire dataset should be loaded into RAM (True) or not (False). Defaults to False
   min_subdir_num=100, # minimal amount of subdirectories used to store data. Defaults to 100
+  save_on_destruction = False, # Whether state of memory should be saved automatically when object of VirtualDirectory is removed - it's known to bug out and raise exceptions
   serializer = PickleSerializer(), # Serializer used for .vdd files. Python dictionary is serialized, then compressed and saved onto drive
   compressor = ZlibCompressor(), # Compressor used for .vdd files. Python dictionary is serialized, then compressed and saved onto drive
   seed = None # Seed for random number generated contained within VirtualDirectory. I've no idea why anyone would want to set it to any specific value
@@ -116,6 +120,7 @@ vd = VirtualDirectory(
 ```
 
 ```py
+import pickle
 class PickleSerializer:
     def serialize(self, python_object):
         return pickle.dumps(python_object)
@@ -124,6 +129,7 @@ class PickleSerializer:
 ```
 
 ```py
+import zlib
 class ZlibCompressor:
     def compress(self, binary_string):
         return zlib.compress(binary_string)
@@ -137,7 +143,7 @@ class ZlibCompressor:
 
 I've included tools that convert between Pillow and OpenCV image format. Given the primary objective of this library is to be used in AI, it might be useful to some. 
 ```py
-from VirtualDirectory import pil_to_opencv, opencv_to_pil
+from VirtualDirectory import VirtualDirectory, pil_to_opencv, opencv_to_pil, PillowDataManager, OpenCVDataManager
 ```
 
 ```py
