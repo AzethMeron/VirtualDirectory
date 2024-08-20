@@ -160,7 +160,7 @@ class VirtualDirectory:
         dump_list = [ i for i in os.listdir(self.root) if i.endswith(".vdd") ]
         subdir_set = set(subdir_list)
         if self.verbose and len(dump_list) > 0: print(f"Found {len(dump_list)} dumpfiles, loading...")
-        for dump in tqdm.tqdm(dump_list, disable = not self.verbose, postfix={"stage":"loading into memory"}):
+        for dump in tqdm.tqdm(dump_list, disable = not self.verbose, postfix={"stage":"loading vdd files"}):
             p = pathlib.Path(dump)
             subdir = p.stem
             if subdir in subdir_set:
