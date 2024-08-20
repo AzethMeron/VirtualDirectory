@@ -6,6 +6,7 @@ import zlib
 import pickle
 import io
 import pathlib
+import shutil
 # Non-standard
 import tqdm # pip install tqdm>=4.66.5
 import cv2 # pip install opencv-python>=4.10.0.84
@@ -66,44 +67,49 @@ class OpenCVDataManager:
         return pil_to_opencv(pil_image)
 
 class VirtualDirectory:
-    def __init__(self, root, data_manager, verbose = True, min_subdir_num = 100, load_to_memory = False, serializer = None, compressor = None, seed = None):
+    def __init__(self, root, data_manager, verbose = True, min_subdir_num = 100, load_to_memory = False, save_on_destruction = False, serializer = None, compressor = None, seed = None):
+        self.__memory_extension = ".vdd"  # Must include full-stop (".")
+        self.__secret_location = ".secret"  # Must start with full-stop (".")
+        self.__min_subdir_num = min_subdir_num
         os.makedirs( root, exist_ok = True )
         self.root = root # String
         self.load_to_memory = load_to_memory
+        self.save_on_destruction = save_on_destruction
         self.verbose = verbose
         self.random = random.Random(seed) if seed else random.Random()
         self.serializer = serializer if serializer else PickleSerializer()
         self.compressor = compressor if compressor else ZlibCompressor()
         self.data_manager = data_manager
         if self.verbose: print(f"VirtualDirectory {self.root}: Scanning for subdirectories...")
-        self.subdir_list = [ subdir for subdir in os.listdir(root) if os.path.isdir( os.path.join(root, subdir) ) ] # [ subdir_0, subdir_1 ... subdir_X ]
-        if len(self.subdir_list) < min_subdir_num: self.__generate_subdirs(min_subdir_num)
-        if self.verbose: print(f"Found {len(self.subdir_list)} directories.")
+        self.subdir_list = [ subdir for subdir in os.listdir(root) if os.path.isdir( os.path.join(root, subdir) ) and not subdir.startswith(".") ] # [ subdir_0, subdir_1 ... subdir_X ]
+        if len(self.subdir_list) < min_subdir_num: self.subdir_list = self.__generate_subdirs(self.subdir_list, min_subdir_num)
+        if self.verbose: print(f"VirtualDirectory {self.root}: Found {len(self.subdir_list)} directories.")
         self.files_map = self.__build_files_map(self.subdir_list) # files_map[filename] = subdir, which means path = os.path.join(root, subdir, filename)
         self.memory = self.__load_to_memory(self.files_map) if self.load_to_memory else None
-    def __generate_subdirs(self, min_subdir_num):
-        subdir_set = set(self.subdir_list)
-        limit = min_subdir_num - len(self.subdir_list)
+    def __generate_subdirs(self, subdir_list, min_subdir_num):
+        subdir_set = set(subdir_list)
+        limit = min_subdir_num - len(subdir_list)
         new_subdirs = [ self.__default_subdir_name(i) for i in range(0 ,min_subdir_num) if self.__default_subdir_name(i) not in subdir_set ][:limit]
         for subdir in new_subdirs:
             os.makedirs( os.path.join(self.root, subdir), exist_ok = True )
-            self.subdir_list.append(subdir)
+            subdir_list.append(subdir)
+        return subdir_list
     def __default_subdir_name(self, x):
         return f"subdir_{x}"
     def __build_files_map(self, subdir_list):
         files_map = dict()
-        if self.verbose: print("Scanning subdirectories for files...")
-        for subdir in tqdm.tqdm(subdir_list, disable = not self.verbose, postfix = {"stage": "scanning subdirectories"}):
-            files_list = os.listdir( os.path.join(self.root, subdir) )
+        if self.verbose: print(f"VirtualDirectory {self.root}: Scanning subdirectories for files...")
+        for subdir in tqdm.tqdm(subdir_list, disable = not self.verbose, postfix = {"stage": "scanning subdirectories", "virtualdirectory":f"{self.root}"}):
+            files_list = [ i for i in os.listdir( os.path.join(self.root, subdir) ) if not i.startswith(".") ]
             for filename in files_list:
                 files_map[filename] = subdir
-        if self.verbose: print(f"Found {len(files_map)} files.")
+        if self.verbose: print(f"VirtualDirectory {self.root}: Found {len(files_map)} files.")
         return files_map
     def __load_to_memory(self, files_map):
         memory = self.__load_state(self.subdir_list)
-        if self.verbose: print("Scanning directory for new or missing files...")
+        if self.verbose: print(f"VirtualDirectory {self.root}: Scanning directory for new or missing files...")
         memory = self.__strip_removed_files(memory, files_map)
-        for filename in tqdm.tqdm(files_map.keys(), disable = not self.verbose, postfix={"stage":"loading into memory"}):
+        for filename in tqdm.tqdm(files_map.keys(), disable = not self.verbose, postfix={"stage":"loading into memory", "virtualdirectory":f"{self.root}"}):
             subdir = files_map[filename]
             path = os.path.join(self.root, subdir, filename)
             if subdir not in memory: memory[subdir] = dict()
@@ -114,12 +120,51 @@ class VirtualDirectory:
         return memory
     def __strip_removed_files(self, memory, files_map):
         for subdir in memory.keys():
-            for filename in memory[subdir].keys():
+            file_keys = list(memory[subdir].keys())
+            for filename in file_keys:
                 if filename in files_map and files_map[filename] == subdir: continue
                 del memory[subdir][filename]
         return memory
     def __get_next_subdir(self):
         return self.random.choice(self.subdir_list)
+    def __save_state(self, destructed):
+        if not self.load_to_memory: return
+        loop = self.memory.keys() if destructed else tqdm.tqdm(self.memory.keys(), disable = not self.verbose, postfix={"stage":f"saving {self.__memory_extension} files", "virtualdirectory":f"{self.root}"})
+        for subdir in loop:
+            path = os.path.join( self.root, f"{subdir}{self.__memory_extension}")
+            dump = self.serializer.serialize( self.memory[subdir] )
+            dump = self.compressor.compress(dump)
+            with open(path, "wb") as handle:
+                handle.write(dump)
+    def __load_state(self, subdir_list):
+        if not self.load_to_memory: return
+        memory = dict()
+        for subdir in subdir_list: memory[subdir] = dict()
+        dump_list = [ i for i in os.listdir(self.root) if i.endswith(self.__memory_extension) and not i.startswith(".") ]
+        subdir_set = set(subdir_list)
+        if self.verbose and len(dump_list) > 0: print(f"VirtualDirectory {self.root}: Found {len(dump_list)} dumpfiles, loading... (note: dump files of removed/renamed subdirectories will be ignored)")
+        for dump in tqdm.tqdm(dump_list, disable = not self.verbose, postfix={"stage":f"loading {self.__memory_extension} files", "virtualdirectory":f"{self.root}"}):
+            p = pathlib.Path(dump)
+            subdir = p.stem
+            if subdir in subdir_set:
+                path = os.path.join(self.root, dump)
+                with open(path, "rb") as handle:
+                    dump = handle.read()
+                    dump = self.compressor.decompress(dump)
+                    memory[subdir] = self.serializer.deserialize(dump)
+        return memory
+    def __len__(self):
+        return len(self.files_map)
+    def __del__(self):
+        if not self.load_to_memory or not self.save_on_destruction: return
+        if self.verbose: print(f"(Destruction) VirtualDirectory {self.root}: Saving memory. This may take a while...")
+        self.__save_state(destructed=True)
+    def __iter__(self):
+        for filename in self.files_map.keys():
+            subdir = self.files_map[filename]
+            path = os.path.join( self.root, subdir, filename )
+            data = self.memory[subdir][filename] if self.load_to_memory else None
+            yield (filename, path, data)
     def load(self, filename):
         if self.exists(filename):
             subdir = self.files_map[filename]
@@ -149,41 +194,47 @@ class VirtualDirectory:
         if not self.load_to_memory: return
         if self.verbose: print(f"VirtualDirectory {self.root}: Saving memory. This may take a while...")
         self.__save_state(destructed=False)
-    def __save_state(self, destructed):
-        if not self.load_to_memory: return
-        loop = self.memory.keys() if destructed else tqdm.tqdm(self.memory.keys(), disable = not self.verbose, postfix={"stage":"saving vdd files"})
-        for subdir in loop:
-            path = os.path.join( self.root, f"{subdir}.vdd")
-            dump = self.serializer.serialize( self.memory[subdir] )
-            dump = self.compressor.compress(dump)
-            with open(path, "wb") as handle:
-                handle.write(dump)
-    def __load_state(self, subdir_list):
-        if not self.load_to_memory: return
-        memory = dict()
-        for subdir in subdir_list: memory[subdir] = dict()
-        dump_list = [ i for i in os.listdir(self.root) if i.endswith(".vdd") ]
-        subdir_set = set(subdir_list)
-        if self.verbose and len(dump_list) > 0: print(f"Found {len(dump_list)} dumpfiles, loading...")
-        for dump in tqdm.tqdm(dump_list, disable = not self.verbose, postfix={"stage":"loading vdd files"}):
-            p = pathlib.Path(dump)
-            subdir = p.stem
-            if subdir in subdir_set:
-                path = os.path.join(self.root, dump)
-                with open(path, "rb") as handle:
-                    dump = handle.read()
-                    dump = self.compressor.decompress(dump)
-                    memory[subdir] = self.serializer.deserialize(dump)
-        return memory
-    def __len__(self):
-        return len(self.files_map)
-    def __del__(self):
-        if not self.load_to_memory: return
-        if self.verbose: print(f"(Destruction) VirtualDirectory {self.root}: Saving memory. This may take a while...")
-        self.__save_state(destructed=True)
-    def __iter__(self):
-        for filename in self.files_map.keys():
-            subdir = self.files_map[filename]
-            path = os.path.join( self.root, subdir, filename )
-            data = self.memory[subdir][filename] if self.load_to_memory else None
-            yield (filename, path, data)
+    def redistribute_all_files(self, are_you_sure=False):
+        if not are_you_sure: return
+        if self.verbose: print(f"VirtualDirectory {self.root}: Redistributing files. This may take a while...")
+        secret_path = os.path.join( self.root, self.__secret_location )
+        shutil.rmtree(secret_path, ignore_errors=True)
+        os.makedirs(secret_path)
+        # Gathering info about files in virtual directory
+        filedata = [ (i[0], i[1], i[2]) for i in self ]
+        # Moving to temporary secret spot
+        for index, (filename, src, data) in enumerate(filedata):
+            dst = os.path.join(secret_path, filename)
+            shutil.move(src,dst)
+            filedata[index] = (filename, dst, data)
+        # Purging VirtualDirectory
+        self.files_map = dict()
+        self.memory = dict() if self.load_to_memory else None
+        for subdir in self.subdir_list:
+            path = os.path.join(self.root, subdir)
+            shutil.rmtree(path)
+        self.subdir_list = []
+        memory_files = [ i for i in os.listdir(self.root) if i.endswith(self.__memory_extension) and not i.startswith(".") ]
+        for mem in memory_files:
+            os.remove(os.path.join(self.root, mem))
+        # Recreating VirtualDirectory
+        self.subdir_list = self.__generate_subdirs([], self.__min_subdir_num)
+        for index, (filename, src, data) in enumerate(filedata):
+            subdir = self.__get_next_subdir()
+            dst = os.path.join(self.root, subdir, filename)
+            shutil.move(src, dst)
+            self.files_map[filename] = subdir
+            if self.load_to_memory:
+                if subdir not in self.memory: self.memory[subdir] = dict()
+                self.memory[subdir][filename] = data
+        self.save_state()
+        # Cleaning
+        shutil.rmtree(secret_path, ignore_errors=True)
+        del filedata
+
+
+
+
+
+
+
