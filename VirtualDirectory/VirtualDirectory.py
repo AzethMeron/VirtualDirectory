@@ -163,8 +163,8 @@ class VirtualDirectory:
         for filename in self.files_map.keys():
             subdir = self.files_map[filename]
             path = os.path.join( self.root, subdir, filename )
-            data = self.memory[subdir][filename] if self.load_to_memory else None
-            yield (filename, path, data)
+            binary_data = self.memory[subdir][filename] if self.load_to_memory else None
+            yield (filename, path, binary_data)
     def load(self, filename):
         if self.exists(filename):
             subdir = self.files_map[filename]
@@ -204,10 +204,10 @@ class VirtualDirectory:
         # Gathering info about files in virtual directory
         filedata = [ (i[0], i[1], i[2]) for i in self ]
         # Moving to temporary secret spot
-        for index, (filename, src, data) in enumerate(filedata):
+        for index, (filename, src, binary_data) in enumerate(filedata):
             dst = os.path.join(secret_path, filename)
             shutil.move(src,dst)
-            filedata[index] = (filename, dst, data)
+            filedata[index] = (filename, dst, binary_data)
         # Purging VirtualDirectory
         self.files_map = dict()
         self.memory = dict() if self.load_to_memory else None
@@ -216,18 +216,17 @@ class VirtualDirectory:
             shutil.rmtree(path)
         self.subdir_list = []
         memory_files = [ i for i in os.listdir(self.root) if i.endswith(self.__memory_extension) and not i.startswith(".") ]
-        for mem in memory_files:
-            os.remove(os.path.join(self.root, mem))
+        for mem in memory_files: os.remove(os.path.join(self.root, mem))
         # Recreating VirtualDirectory
         self.subdir_list = self.__generate_subdirs([], self.__min_subdir_num)
-        for index, (filename, src, data) in enumerate(filedata):
+        for index, (filename, src, binary_data) in enumerate(filedata):
             subdir = self.__get_next_subdir()
             dst = os.path.join(self.root, subdir, filename)
             shutil.move(src, dst)
             self.files_map[filename] = subdir
             if self.load_to_memory:
                 if subdir not in self.memory: self.memory[subdir] = dict()
-                self.memory[subdir][filename] = data
+                self.memory[subdir][filename] = binary_data
         self.save_state()
         # Cleaning
         shutil.rmtree(secret_path, ignore_errors=True)
