@@ -194,6 +194,12 @@ class VirtualDirectory:
         if not self.load_to_memory: return
         if self.verbose: print(f"VirtualDirectory {self.root}: Saving memory. This may take a while...")
         self.__save_state(destructed=False)
+    def get_path(self, filename):
+        if self.exists(filename):
+            return os.path.join( self.root, self.files_map[filename], filename )
+        return None
+    def get_list_of_files(self):
+        return list(self.files_map.keys())
     def redistribute_all_files(self, are_you_sure=False):
         if not are_you_sure and self.verbose: print(f"VirtualDirectory {self.root}: To redistribute all files, you must pass argument are_you_sure=True. Aborting..")
         if not are_you_sure: return
