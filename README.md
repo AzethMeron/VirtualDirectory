@@ -2,14 +2,25 @@
 
 Simple and universal library, designed to handle datasets stored in multiple subdirectories and with hundreds of thousands of files. Typically used for machine learning, but implementation is versatile enough to support any type of data. Provides seamless interface *(all files appear to be in the same directory)*, reduces number of system calls by loading list of files into memory and allows to *(but does NOT require)* load entire dataset into RAM for quick access.
 
-## Installation
+---
+
+# Table of Contents
+1. [Installation](#installation)
+2. [Setup](#setup)
+3. [Basic usage](#usage)
+4. [Advanced usage](#advusage)
+5. [Miscellaneous](#misc)
+
+---
+
+## Installation <a name="installation"></a>
 
 Designed and tested for ```Python 3.12.0```. You can install this package using PIP with following command.
 ```
 pip install git+https://github.com/AzethMeron/VirtualDirectory.git
 ```
 
-## Setup
+## Setup <a name="setup"></a>
 
 **Check ```mnist_example/``` to see the setup in practice. It's simpler than it appears when described.**
 
@@ -77,7 +88,7 @@ class PillowDataManager:
 
 Loading of dataset can take a lot of time, especially if there're hundreds of thousands of tiny images. If ```load_to_memory = True```, then all subdirectories are also saved to the drive in batched form *(files ```.vdd```)* that can be loaded much faster. 
 
-## Usage 
+## Usage <a name="usage"></a>
 
 Once ```VirtualDirectory``` is properly set up, it will work absolutely seamlessly. It provides very simple yet useful interface:
 ```py
@@ -103,7 +114,7 @@ for filename, path, binary_data in vd:
 
 ---
 
-# Advanced usage
+# Advanced usage <a name="advusage"></a>
 
 One day, hopefully...
 
@@ -142,7 +153,7 @@ class ZlibCompressor:
 
 ---
 
-# Miscellaneous
+# Miscellaneous <a name="misc"></a>
 
 I've included tools that convert between Pillow and OpenCV image format. Given the primary objective of this library is to be used in AI, it might be useful to some. 
 ```py
