@@ -10,6 +10,7 @@ Simple and universal library, designed to handle datasets stored in multiple sub
 3. [Basic usage](#usage)
 4. [Advanced usage](#advusage)
 5. [Miscellaneous](#misc)
+6. [Free-for-all scripts](#ffa)
 
 ---
 
@@ -202,3 +203,109 @@ class OpenCVDataManager:
         pil_image = PilImage.open(buffer)
         return pil_to_opencv(pil_image)
 ```
+
+---
+
+# Free-for-all scripts <a name="ffa"></a>
+
+Scripts made by me or others, applying ```VirtualDirectory``` to practical use. No descriptions, don't ask for one. Not included in library, but useful for insight.
+
+## Pytorch multimodal dataset, with pre-trained models for feature extraction
+```py
+import torch
+import numpy as np
+from torch.utils.data import Dataset
+import torchvision.models as models
+import torchvision.transforms as transforms
+from VirtualDirectory import VirtualDirectory, PillowDataManager
+
+class MultimodalDataset(Dataset):
+    def __init__(self, dataframe, img_dir, augmentation, img_header, text_header, labels_header):
+        self.df = dataframe
+        self.img_dir = img_dir
+        self.augmentation = augmentation
+        self.img_header = img_header # "filename"
+        self.text_header = text_header # "text"
+        self.labels = labels_header # ["label_1", "label_2"]
+        self.virtual_space = VirtualDirectory(root=img_dir, data_manager=PillowDataManager(), load_to_memory=True)
+        self.virtual_space.save_state()
+
+    def get_image(self, index):
+        img_name = self.df.iloc[index][self.img_header]
+        image = self.virtual_space.load(img_name)
+        return image
+
+    def get_text(self, index):
+        return self.df.iloc[index][self.text_header]
+
+    def get_label(self, index):
+        return self.df.iloc[index][self.labels].values
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        image = self.get_image(idx)
+        image = self.augmentation(image)
+        text = self.get_text(idx)
+        labels = self.get_label(idx)
+        return image, text, labels
+
+class TorchDataset(Dataset):
+    def __init__(self, multimodal_dataset, image_model, text_model): # Custom model classes, needs to have "normalize" function which turns input into tensor
+        self.multimodal_dataset = multimodal_dataset
+        self.image_model = image_model
+        self.text_model = text_model
+
+    def __len__(self):
+        return len(self.multimodal_dataset)
+
+    def __getitem__(self, idx):
+        image, text, labels = self.multimodal_dataset[idx]
+        torch_image = self.image_model.normalize(image)
+        torch_encodings = self.text_model.tokenize(text)
+        return torch_image, torch_encodings, np.array(labels).astype(float)
+
+class DistilRoBERTa(nn.Module):
+    def __init__(self, max_tokens):
+        super(DistilRoBERTa, self).__init__()
+        self.max_tokens = max_tokens
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained("distilroberta-base")
+        self.model = transformers.AutoModel.from_pretrained("distilroberta-base")
+        for param in self.model.parameters(): param.requires_grad = False
+
+    def tokenize(self, text):
+        return self.tokenizer.encode_plus(
+            text,
+            add_special_tokens=True,  # Add [CLS] and [SEP] tokens
+            max_length=self.max_tokens,
+            truncation=True,
+            padding='max_length',  # Pad to the fixed length
+            return_tensors='pt'  # Return as a PyTorch tensor
+        )
+
+    def forward(self, encoding):
+        self.model.eval()
+        input_ids, attention_mask = encoding['input_ids'].squeeze(1), encoding['attention_mask'].squeeze(1)
+        with torch.no_grad():
+            _, features = self.model(input_ids = input_ids, attention_mask = attention_mask, return_dict=False)
+            return features
+
+class VGG19(nn.Module):
+    def __init__(self):
+        super(VGG19, self).__init__()
+        self.vgg = models.vgg19(weights = models.VGG19_Weights.IMAGENET1K_V1)
+        self.vgg.classifier = nn.Sequential(*list(self.vgg.classifier.children())[:-2])
+        for param in self.vgg.parameters(): param.requires_grad = False
+  
+    def normalize(self, image):
+        return models.VGG19_Weights.IMAGENET1K_V1.transforms()(image)
+  
+    def forward(self, x):
+        self.vgg.eval()
+        with torch.no_grad():
+            x = self.vgg(x)
+            return x
+
+```
+
