@@ -98,7 +98,7 @@ vd.save(filename, object) # saves object under given filename in randomly chosen
 vd.load(filename) # loads object from given filename. Returns None if there's no such file
 vd.exists(filename) # checks if object with given filename exists within dataset (True/False)
 vd.remove(filename) # removes file from dataset. If there's no such file, it's silently ignored
-vd.get_path(filename) # Get full path to given file. Note that editing it outside of VirtualDirectory interface may make it go out of sync. Returns None, if file doesn't exist
+vd.get_path(filename) # Get full path to given file. Note that editing it outside of VirtualDirectory interface WILL make it go out of sync. Returns None, if file doesn't exist
 vd.get_list_of_files() # Get list of filenames in VirtualDirectory
 vd.save_state() # Saves all data in RAM to .vdd files. Speeds up loading in the future
 vd.redistribute_all_files(are_you_sure=True) # When called with are_you_sure=True, it moves all files from all subdirectories into root/.secret, then removes subdirectories and essentially recreates file structure. Allows to easily split dataset into subdirectories (batches) of similar size
