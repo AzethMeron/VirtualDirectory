@@ -213,6 +213,7 @@ Scripts made by me or others, applying ```VirtualDirectory``` to practical use. 
 ## Pytorch multimodal dataset, with pre-trained models for feature extraction
 ```py
 import torch
+import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset
 import torchvision.models as models
