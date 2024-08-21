@@ -14,3 +14,14 @@ for filename in mnist:
 	image = data_manager.load(path)
 	vd.save(filename, image)
 vd.save_state()
+
+
+"""
+# Some tests
+print(vd.get_list_of_files())
+for file, path, binary_img in vd:
+	if not vd.exists(file): print(f"File {file} exists and doesn't exist at the same time")
+	if not vd.get_path(file) == path: print(f"Wrong paths: {vd.get_path(file)} vs {path}")
+	vd.save(file, vd.data_manager.deserialize(binary_img))
+	if not vd.load(file) == vd.data_manager.deserialize(binary_img): print("Something went wrong with images")
+"""
