@@ -218,6 +218,7 @@ import numpy as np
 from torch.utils.data import Dataset
 import torchvision.models as models
 import torchvision.transforms as transforms
+import transformers
 from VirtualDirectory import VirtualDirectory, PillowDataManager
 
 class MultimodalDataset(Dataset):
@@ -307,6 +308,4 @@ class VGG19(nn.Module):
         with torch.no_grad():
             x = self.vgg(x)
             return x
-
 ```
-
