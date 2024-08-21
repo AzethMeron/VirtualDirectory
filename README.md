@@ -7,7 +7,7 @@ Simple and universal library, designed to handle datasets stored in multiple sub
 # Table of Contents
 1. [Installation](#installation)
 2. [Setup](#setup)
-3. [Basic usage](#usage)
+3. [Usage](#usage)
 4. [Advanced usage](#advusage)
 5. [Miscellaneous](#misc)
 6. [Free-for-all scripts](#ffa)
