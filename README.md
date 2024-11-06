@@ -21,7 +21,7 @@ Designed and tested for ```Python 3.12.0```. You can install this package using 
 pip install git+https://github.com/AzethMeron/VirtualDirectory.git
 ```
 
-If there're dependencies problems, you can also try disregarding versions. Shouldn't matter anyway, not guaranteed tho.
+If there's problem with dependencies, you can also try disregarding versions. Shouldn't matter anyway, not guaranteed tho.
 ```
 !pip install tqdm opencv-python pillow numpy
 !pip install --no-dependencies git+https://github.com/AzethMeron/VirtualDirectory.git
