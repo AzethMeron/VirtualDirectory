@@ -21,6 +21,12 @@ Designed and tested for ```Python 3.12.0```. You can install this package using 
 pip install git+https://github.com/AzethMeron/VirtualDirectory.git
 ```
 
+If there're dependencies problems, you can also try disregarding versions. Shouldn't matter anyway, not guaranteed tho.
+```
+!pip install tqdm opencv-python pillow numpy
+!pip install --no-dependencies git+https://github.com/AzethMeron/VirtualDirectory.git
+```
+
 ## Setup <a name="setup"></a>
 
 **Check ```mnist_example/``` to see the setup in practice. It's simpler than it appears when described.**
